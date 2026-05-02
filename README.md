@@ -5,9 +5,9 @@ A premium, feature-rich Discord music bot built with **discord.js v14** and **Di
 ## 🚀 Features
 - ⚡ **Slash Commands**: Modern and easy-to-use interface.
 - 🎶 **Multi-Platform**: Support for YouTube, Spotify, SoundCloud, and more.
-- 💎 **Premium UI**: Beautiful embeds with progress bars and status updates.
+- 💎 **Modern App UI**: Interactive **Buttons** (Pause, Skip, Stop) and premium icons.
+- 🛡️ **Stable & Resilient**: Built-in global error handling and unhandled rejection protection.
 - 🎮 **Voice Controls**: Skip, Stop, Queue, Now Playing, and Volume.
-- 🛠️ **Reliable**: Built-in error handling and auto-reconnect.
 
 ## 🛠️ Setup Instructions
 

@@ -1,7 +1,7 @@
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const { DisTube } = require('distube');
 const { SpotifyPlugin } = require('@distube/spotify');
-const { YtDlpPlugin } = require('@distube/yt-dlp');
+const { YouTubePlugin } = require('@distube/youtube');
 const config = require('./config');
 
 const client = new Client({
@@ -9,7 +9,6 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent,
     ],
 });
 
@@ -17,17 +16,19 @@ const client = new Client({
 client.commands = new Collection();
 client.config = config;
 
+const ffmpeg = require('ffmpeg-static');
+
 // DisTube setup
 client.distube = new DisTube(client, {
-    leaveOnStop: false,
+    ffmpeg: {
+        path: ffmpeg
+    },
     emitNewSongOnly: true,
     emitAddSongWhenCreatingQueue: false,
     emitAddListWhenCreatingQueue: false,
     plugins: [
-        new SpotifyPlugin({
-            emitEventsAfterFetching: true,
-        }),
-        new YtDlpPlugin()
+        new SpotifyPlugin(),
+        new YouTubePlugin()
     ],
 });
 
@@ -36,22 +37,39 @@ client.distube = new DisTube(client, {
     require(`./handlers/${handler}`)(client);
 });
 
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
+
 // DisTube Events (Separate logic for music UI)
 client.distube
     .on('playSong', (queue, song) => {
-        queue.textChannel.send({
-            embeds: [{
-                color: parseInt(config.colors.primary.replace('#', ''), 16),
-                title: `${config.emoji.play} Now Playing`,
-                description: `**[${song.name}](${song.url})**`,
-                thumbnail: { url: song.thumbnail },
-                fields: [
-                    { name: 'Duration', value: song.formattedDuration, inline: true },
-                    { name: 'Requested by', value: song.user.tag, inline: true },
-                ],
-                footer: { text: 'New Gen Music Bot | Premium Audio' }
-            }]
-        });
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('pause')
+                    .setEmoji('⏸️')
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId('skip')
+                    .setEmoji('⏭️')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId('stop')
+                    .setEmoji('⏹️')
+                    .setStyle(ButtonStyle.Danger),
+            );
+
+        const embed = new EmbedBuilder()
+            .setColor(config.colors.primary)
+            .setAuthor({ name: 'Now Playing', iconURL: config.icons.play })
+            .setDescription(`**[${song.name}](${song.url})**`)
+            .setThumbnail(song.thumbnail)
+            .addFields(
+                { name: 'Duration', value: song.formattedDuration, inline: true },
+                { name: 'Requested by', value: song.user.tag, inline: true },
+            )
+            .setFooter({ text: 'New Gen Music Bot', iconURL: config.icons.music });
+
+        queue.textChannel.send({ embeds: [embed], components: [row] });
     })
     .on('addSong', (queue, song) => {
         queue.textChannel.send({
@@ -75,3 +93,12 @@ client.distube
     .on('finish', queue => queue.textChannel.send('Finished!'));
 
 client.login(config.token);
+
+// Global Error Handling to prevent crashes
+process.on('unhandledRejection', error => {
+    console.error('Unhandled promise rejection:', error);
+});
+
+process.on('uncaughtException', error => {
+    console.error('Uncaught exception:', error);
+});

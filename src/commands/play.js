@@ -23,7 +23,7 @@ module.exports = {
         await interaction.reply(`${config.emoji.search} | Searching for \`${query}\`...`);
 
         try {
-            interaction.client.distube.play(voiceChannel, query, {
+            await interaction.client.distube.play(voiceChannel, query, {
                 textChannel: interaction.channel,
                 member: interaction.member,
             });
